@@ -78,13 +78,12 @@ export class Logger {
     const types: Type[] = [];
 
     this.configService.get<Log>('LOG').LEVEL.forEach((level) => types.push(Type[level]));
-
     const typeValue = typeof value;
     if (types.includes(type)) {
       if (configService.get<Log>('LOG').COLOR) {
         console.log(
           /*Command.UNDERSCORE +*/ Command.BRIGHT + Level[type],
-          '[Evolution API]',
+          '[Neurelix API]',
           Command.BRIGHT + Color[type],
           this.instance ? `[${this.instance}]` : '',
           Command.BRIGHT + Color[type],
@@ -110,7 +109,7 @@ export class Logger {
         typeValue === 'object' ? console.log(/*Level.DARK,*/ value, '\n') : '';
       } else {
         console.log(
-          '[Evolution API]',
+          '[Neurelix API]',
           this.instance ? `[${this.instance}]` : '',
           process.pid.toString(),
           '-',

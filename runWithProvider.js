@@ -3,7 +3,6 @@ const { execSync } = require('child_process');
 const { existsSync } = require('fs');
 
 dotenv.config();
-
 const { DATABASE_PROVIDER } = process.env;
 const databaseProviderDefault = DATABASE_PROVIDER ?? 'postgresql';
 

@@ -17,12 +17,23 @@ import compression from 'compression';
 import cors from 'cors';
 import express, { json, NextFunction, Request, Response, urlencoded } from 'express';
 import { join } from 'path';
+import { exec } from 'child_process';
 
 function initWA() {
   waMonitor.loadInstance();
 }
 
+function initDocker() {
+  try {
+    const { stdout, stderr } = exec('sh ./iniciar_dockers.sh');
+    console.log('Docker iniciado com sucesso');
+  } catch (error) {
+    console.error('Erro ao iniciar docker', error);
+  }
+}
+
 async function bootstrap() {
+  initDocker();
   const logger = new Logger('SERVER');
   const app = express();
 
