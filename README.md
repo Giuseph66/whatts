@@ -118,3 +118,4 @@ Apart from the specific conditions mentioned above, all other rights and restric
 © 2024 Evolution API# conecta_whatts
 # whatts
 # whatts
+# whatts
