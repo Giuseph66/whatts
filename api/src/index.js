@@ -5,7 +5,7 @@ const os = require('os');
 const axios = require('axios');
 const WebSocket = require('ws');
 const url_whatts = process.env.URL_WHATS || 'http://whts.neurelix.com.br';
-const MEDIA_API_URL = url_whatts + '/chat/getBase64FromMediaMessage/Eu';
+const MEDIA_API_URL = url_whatts + '/chat/getBase64FromMediaMessage/Giuseph';
 const MEDIA_API_KEY = process.env.MEDIA_API_KEY || 'jesuseateu';
 const url_transcricao = process.env.URL_TRANSCRICAO + '/Audio' || 'http://10.100.10.113:8098/Audio';
 
@@ -58,7 +58,7 @@ async function monitorNewMessages() {
           lastTimestamp = message.messageTimestamp;
           
           // Verificar se é uma mensagem de mídia que precisa ser convertida
-          const isMedia = ['imageMessage', 'audioMessage'].includes(message.messageType);
+          const isMedia = ['imageMessage', 'audioMessage', 'videoMessage'].includes(message.messageType);
           const hasBase64 = Boolean(message.mediaBase64);
           
           if (isMedia && !hasBase64) {
@@ -200,6 +200,13 @@ async function notifyNewMessage(chatId, message) {
 
 app.use(cors());
 app.use(express.json());
+
+// Middleware para extrair instanceId do header
+app.use((req, res, next) => {
+  // Extrair instanceId do header
+  req.instanceId = req.headers.instanceid || 'Giuseph'; // Default fallback
+  next();
+});
 
 // Gerenciar conexões WebSocket
 wss.on('connection', (ws) => {
@@ -352,16 +359,29 @@ app.get('/api/chats/:remoteJid', async (req, res) => {
 
 app.get('/api/chats/:remoteJid/messages', async (req, res) => {
   try {
-    // 1) Busca as 100 mensagens mais recentes
+    const instanceId = req.query.instanceId || req.instanceId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+    
+    // 1) Busca as mensagens com paginação usando o campo instanceId para otimização
     let messages = await prisma.message.findMany({
       where: {
-        key: {
-          path: ['remoteJid'],
-          equals: req.params.remoteJid
-        }
+        AND: [
+          {
+            key: {
+              path: ['remoteJid'],
+              equals: req.params.remoteJid
+            }
+          },
+          {
+            instanceId: instanceId // Usar o campo instanceId da tabela para otimização
+          }
+        ]
       },
       orderBy: { messageTimestamp: 'desc' },
-      take: 20
+      take: limit,
+      skip: skip
     });
 
     // 2) Para cada mídia sem base64, chamar a API e atualizar no DB
@@ -382,7 +402,7 @@ app.get('/api/chats/:remoteJid/messages', async (req, res) => {
               mediaKey: msg.message[msg.messageType]?.mediaKey
             },
             convertToMp4: true,
-            instanceId: msg.key.remoteJid.split('@')[0]
+            instanceId: instanceId // Usar instanceId do header ou query
           }, {
             headers: { 
               apikey: MEDIA_API_KEY,
@@ -409,7 +429,6 @@ app.get('/api/chats/:remoteJid/messages', async (req, res) => {
           }
         } catch (err) {
           console.error(`Falha ao converter media ${msg.key.id}:`, err.message);
-          //console.log("msg", msg);
         }
       }
     }
@@ -431,7 +450,12 @@ app.get('/', async (req, res) => {
 // Get all contacts
 app.get('/api/contacts', async (req, res) => {
   try {
+    const instanceId = req.instanceId;
+    
     const contacts = await prisma.contact.findMany({
+      where: {
+        instanceId: instanceId
+      },
       orderBy: {
         updatedAt: 'desc'
       }
@@ -571,7 +595,7 @@ app.post('/api/chats/:remoteJid/messages', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2653;
 const IP = getLocalIP();
 
 // Usar server.listen em vez de app.listen
