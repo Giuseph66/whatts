@@ -58,7 +58,7 @@ async function monitorNewMessages() {
           lastTimestamp = message.messageTimestamp;
           
           // Verificar se é uma mensagem de mídia que precisa ser convertida
-          const isMedia = ['imageMessage', 'audioMessage', 'videoMessage'].includes(message.messageType);
+          const isMedia = ['imageMessage', 'audioMessage', 'videoMessage', 'documentMessage' , 'stickerMessage'].includes(message.messageType);
           const hasBase64 = Boolean(message.mediaBase64);
           
           if (isMedia && !hasBase64) {
@@ -386,7 +386,7 @@ app.get('/api/chats/:remoteJid/messages', async (req, res) => {
 
     // 2) Para cada mídia sem base64, chamar a API e atualizar no DB
     for (const msg of messages) {
-      const isMedia = ['imageMessage','audioMessage'].includes(msg.messageType);
+      const isMedia = ['imageMessage','audioMessage', 'videoMessage', 'documentMessage' , 'stickerMessage'].includes(msg.messageType);
       const hasBase64 = Boolean(msg.mediaBase64);
       if (isMedia && !hasBase64) {
         try {
